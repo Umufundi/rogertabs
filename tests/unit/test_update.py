@@ -116,7 +116,7 @@ def test_update_never_imports_the_rest_of_rogertabs():
 # ── the launcher ──────────────────────────────────────────────────────
 
 
-OLD_CMD = b'@"C:\\Users\\3A HealthCare\\.meet\\core\\Scripts\\python.exe" -m meet %*\r\n'
+OLD_CMD = b'@"C:\\Users\\Sam Rivera\\.meet\\core\\Scripts\\python.exe" -m meet %*\r\n'
 
 
 def test_old_windows_launcher_gains_dash_p_safely(tmp_path):
@@ -132,7 +132,7 @@ def test_old_windows_launcher_gains_dash_p_safely(tmp_path):
 
 
 def test_old_posix_launcher_gains_dash_p(tmp_path):
-    old = b'#!/bin/sh\nexec "/home/flo/.meet/core/bin/python" -m meet "$@"\n'
+    old = b'#!/bin/sh\nexec "/home/sam/.meet/core/bin/python" -m meet "$@"\n'
     (tmp_path / "meet").write_bytes(old)
     assert update.upgrade_launcher(tmp_path)
     assert (tmp_path / "meet").read_bytes() == old.replace(b" -m meet ", b" -Pm meet ")
