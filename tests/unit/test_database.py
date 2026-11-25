@@ -4,7 +4,7 @@ import sqlite3
 import numpy as np
 import pytest
 
-from meet.memory import db, people
+from rogertabs.memory import db, people
 from tests.conftest import MODEL
 
 
@@ -79,7 +79,7 @@ def test_unversioned_database_is_stamped(tmp_path):
     assert conn.execute("SELECT display_name FROM person").fetchone()[0] == "X"
 
 
-def test_database_from_a_newer_meet_is_refused(tmp_path):
+def test_database_from_a_newer_rogertabs_is_refused(tmp_path):
     path = tmp_path / "new.db"
     newer = sqlite3.connect(path)
     newer.execute(f"PRAGMA user_version = {db.SCHEMA_VERSION + 1}")

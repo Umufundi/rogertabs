@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from meet.identity import credentials, jev
-from meet.memory.people import Candidate
+from rogertabs.identity import credentials, jev
+from rogertabs.memory.people import Candidate
 
 CANDS = [Candidate("marcus", "Marcus", 0.86, 0.85, 9, 3), Candidate("sarah", "Sarah", 0.84, 0.83, 7, 2)]
 

@@ -1,7 +1,7 @@
 """One-shot checks the core runs before a meeting: `--probe`, `--prime`, `--mic-test`.
 
 Each prints exactly one JSON object on stdout and exits. They exist so that
-`meet setup` and `meet doctor` can ask the listener's own interpreter what it
+`rogertabs setup` and `rogertabs doctor` can ask the listener's own interpreter what it
 has, instead of guessing from the outside: the core deliberately cannot import
 torch, so only the listener can say whether torch imports.
 """
@@ -27,7 +27,7 @@ PACKAGES = (
     "huggingface-hub",
     "sounddevice",
     "soundfile",
-    "meet-listen",
+    "rogertabs-listen",
 )
 
 

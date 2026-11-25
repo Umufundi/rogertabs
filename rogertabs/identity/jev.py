@@ -23,14 +23,23 @@ import json
 import math
 import os
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 import httpx
 
-from ..config import JEV_KEYCHAIN_SERVICE, JEV_MODEL, JEV_TIMEOUT_S, JEV_URL
+from ..config import JEV_KEYCHAIN_LEGACY_SERVICE, JEV_KEYCHAIN_SERVICE, JEV_MODEL, JEV_TIMEOUT_S, JEV_URL
 from ..memory.people import Candidate
 from . import credentials
 
 UNKNOWN = "UNKNOWN"
+# Sent to a local Laya server that was started without LAYA_API_KEY.
+LOCAL_KEY = "local"
+
+
+def is_local(url: str) -> bool:
+    """True for a Jev-compatible server on this machine, such as Laya."""
+    return urlparse(url).hostname in {"127.0.0.1", "localhost", "::1"}
+
 
 INSTRUCTIONS = """Choose which person is speaking the quoted utterance.
 
@@ -73,11 +82,20 @@ def api_key() -> str | None:
     return _stored_key()
 
 
+def request_key() -> str | None:
+    """The bearer token for the configured Jev URL.
+
+    A Laya server on this machine needs no key unless it was started with
+    LAYA_API_KEY; the header is sent either way, so a keyed one still works.
+    """
+    return api_key() or (LOCAL_KEY if is_local(JEV_URL) else None)
+
+
 @functools.cache
 def _stored_key() -> str | None:
     # Cached: this is asked on every tie mid-meeting, and each lookup can mean
     # spawning a process. A key added mid-meeting is picked up next meeting.
-    return credentials.lookup(JEV_KEYCHAIN_SERVICE)
+    return credentials.lookup_migrating(JEV_KEYCHAIN_SERVICE, JEV_KEYCHAIN_LEGACY_SERVICE)
 
 
 def _validate(answer: dict, option_ids: set[str]) -> None:
@@ -112,7 +130,7 @@ def ask(
 
     `recent` is the last few (speaker label, text) pairs, newest last.
     """
-    key = api_key()
+    key = request_key()
     if not key:
         raise JevUnavailable("no TypeSafe API key in the environment or keychain")
     if len(candidates) < 2:

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from meet.session.clustering import OnlineClusterer
+from rogertabs.session.clustering import OnlineClusterer
 
 
 def test_same_voice_joins_different_voice_splits(voices):

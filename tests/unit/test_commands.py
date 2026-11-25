@@ -1,6 +1,6 @@
-from meet.config import POLICY
-from meet.session.meeting import Meeting
-from meet.ui import commands
+from rogertabs.config import POLICY
+from rogertabs.session.meeting import Meeting
+from rogertabs.ui import commands
 
 
 def make(conn, script, *who):
@@ -67,7 +67,7 @@ def test_every_command_in_the_menu_is_understood(conn, script):
 
 
 def test_bare_number_picks_an_option(conn, script, voices):
-    from meet.memory import db, people
+    from rogertabs.memory import db, people
 
     for name, who in (("Marcus", "a"), ("Sarah", "b")):
         slug = db.upsert_person(conn, name)
@@ -76,7 +76,7 @@ def test_bare_number_picks_an_option(conn, script, voices):
     import numpy as np
 
     between = voices.base("a") + voices.base("b")
-    from meet.config import POLICY
+    from rogertabs.config import POLICY
 
     m = Meeting(conn, title="t", use_jev=False, policy=POLICY.first_meeting().__class__(
         match_min_similarity=0.5, provisional_similarity=0.6, auto_similarity=0.65))

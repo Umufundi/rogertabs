@@ -1,9 +1,9 @@
-# Meet
+# Rogertabs
 
-Put a laptop on the table, `meet start`, and talk. Meet transcribes the room
+Put a laptop on the table, `rogertabs start`, and talk. Rogertabs transcribes the room
 live, separates speakers, names the ones it knows, marks the ones it doesn't as
 `?`, and occasionally asks you *who said this?* One answer fixes that speaker's
-whole history and teaches Meet their voice for next time. Everything runs
+whole history and teaches Rogertabs their voice for next time. Everything runs
 locally; the internet is needed once, at setup.
 
 ## Install
@@ -16,7 +16,7 @@ Supported computers:
 | macOS | Apple Silicon (M1 and later), macOS 13+ (macOS 12 with Python 3.12) | Intel Macs, macOS 11 and older |
 | Linux | x64 | |
 
-Python 3.12 or 3.13. `meet setup` and `meet doctor` check all of this first
+Python 3.12 or 3.13. `rogertabs setup` and `rogertabs doctor` check all of this first
 and say so plainly.
 
 **Windows** (PowerShell, no admin rights needed):
@@ -32,47 +32,72 @@ sh scripts/install.sh
 ```
 
 Both need Python 3.12 or 3.13 (`winget install Python.Python.3.12` on Windows). They
-install the app into `~/.meet/core`, put `meet` on your PATH, and run
-`meet setup`, which:
+install the app into `~/.rogertabs/core`, put `rogertabs` on your PATH, and run
+`rogertabs setup`, which:
 
-- builds the listener runtime in `~/.meet/runtime` from a hash-locked
+- builds the listener runtime in `~/.rogertabs/runtime` from a hash-locked
   dependency set (`listener/requirements.lock`);
 - downloads Whisper, the ECAPA speaker model, and Silero VAD into
-  `~/.meet/models`, then switches the listener to offline mode;
-- initializes `~/.meet/voices.db`, tests the microphone, and runs `meet doctor`.
+  `~/.rogertabs/models`, then switches the listener to offline mode;
+- initializes `~/.rogertabs/voices.db`, tests the microphone, and runs `rogertabs doctor`.
 
-Everything lives under `~/.meet` (`%USERPROFILE%\.meet`); set `MEET_HOME` to
+Everything lives under `~/.rogertabs` (`%USERPROFILE%\.rogertabs`); set `ROGERTABS_HOME` to
 move it. After this first install, the downloaded folder can be deleted.
 
 ## Update
 
 ```sh
-meet update           # pull the latest, reinstall, rebuild only what changed
-meet update --check   # just say whether an update is waiting
+rogertabs update           # pull the latest, reinstall, rebuild only what changed
+rogertabs update --check   # just say whether an update is waiting
 ```
 
-Meet keeps its own copy of the code in `~/.meet/src` and uses Git to fetch it
+Rogertabs keeps its own copy of the code in `~/.rogertabs/src` and uses Git to fetch it
 (`winget install Git.Git` on Windows). If you point it at a private fork, Git
 signs in to GitHub the first time (a browser opens) and remembers it.
 Models are never downloaded again, and your voices and meetings are untouched.
 
+## Upgrading from Meet
+
+Rogertabs is the new name of Meet. An existing install keeps its voices, meetings
+and models:
+
+- The first `rogertabs` command moves `~/.meet` to `~/.rogertabs` (one rename; it
+  falls back to moving entry by entry, and carries on where it stopped if it is
+  interrupted). Nothing is deleted or downloaded again. If you chose a home
+  yourself with `MEET_HOME` / `ROGERTABS_HOME`, that folder is left where it is.
+- Launchers are rewritten, and `~/.meet/bin` keeps a working `rogertabs` and `meet`
+  so your PATH entry still works. The listener's Python package is swapped in
+  place (`pip install --no-deps`); torch and the models are untouched.
+- `meet` still works for now: it prints `Meet is now Rogertabs. Use: rogertabs ...`
+  and forwards the arguments. Every `MEET_*` environment variable is still read
+  when its `ROGERTABS_*` twin is not set.
+- An old install that runs `meet update` pulls this code, reinstalls, and ends with
+  the data moved, the listener repaired and `rogertabs` ready. If any step cannot
+  finish (no network for the one small package build), it says so and names one
+  command: `rogertabs setup`.
+- The update checkout's `origin` is rewritten to `github.com/Umufundi/rogertabs.git`
+  (GitHub redirects the old address, but not forever). A remote you pointed
+  somewhere else is left alone.
+- `~/.meet` can be deleted by hand once you have checked `~/.rogertabs`; `rogertabs
+  doctor` mentions it while an old `voices.db` is still there.
+
 ## Use
 
 ```sh
-meet doctor            # everything green?  (--audio, --models, --verbose)
-meet start -t "Monday staff" -p "Flo, Marcus, Sarah"
-meet replay recording.wav
-meet people            # who Meet can recognise
-meet forget Marcus     # erase one person's voiceprints
+rogertabs doctor            # everything green?  (--audio, --models, --verbose)
+rogertabs start -t "Monday staff" -p "Flo, Marcus, Sarah"
+rogertabs replay recording.wav
+rogertabs people            # who Rogertabs can recognise
+rogertabs forget Marcus     # erase one person's voiceprints
 ```
 
 During a meeting, type `/` to see every command; the menu narrows as you type
-and Tab completes. When Meet asks *who said this?*, type `1`–`4` to pick a
+and Tab completes. When Rogertabs asks *who said this?*, type `1`–`4` to pick a
 suggestion, or `3 Marcus` to answer question 3 with any name. The common ones:
 `/wrong Sarah` fixes the last line, `/merge 2 4`, `/undo`, `/decision`,
 `/action`, `/end`. (`:` works in place of `/`.)
 
-**Meetings have no time limit.** Meet keeps the computer awake while it
+**Meetings have no time limit.** Rogertabs keeps the computer awake while it
 records (close the lid and it will still sleep, so keep it open), and after
 `/end` it finishes transcribing everything, however far behind a long meeting
 left it. The only ceilings are disk space (about 0.12 GB per hour) and the WAV
@@ -80,7 +105,7 @@ format itself, at about 37 hours per recording.
 
 ### Jev (optional)
 
-With a TypeSafe API key, Meet asks Jev to break ties between voices that are
+With a TypeSafe API key, Rogertabs asks Jev to break ties between voices that are
 genuinely close, and to extract decisions and actions at the end. Without one,
 those questions come to you and minutes are still written. Store the key in the
 OS credential store, not a file:
@@ -124,7 +149,7 @@ the order work is done in.
 ## License
 
 Apache License 2.0; see [LICENSE](LICENSE). Copyright (c) 2026 FY Network.
-[NOTICE](NOTICE) records the open-source projects whose designs Meet draws on
+[NOTICE](NOTICE) records the open-source projects whose designs Rogertabs draws on
 and the licenses of the model weights it downloads (all ungated, Apache-2.0 or
 MIT). Voice data, recordings and transcripts never leave your computer; the
 optional Jev integration sends only transcript text, and only when you have

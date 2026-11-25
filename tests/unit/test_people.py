@@ -1,7 +1,7 @@
 import numpy as np
 
-from meet.config import POLICY
-from meet.memory import db, people
+from rogertabs.config import POLICY
+from rogertabs.memory import db, people
 from tests.conftest import MODEL
 
 

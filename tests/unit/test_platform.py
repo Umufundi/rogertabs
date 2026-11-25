@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from meet import runtime
-from meet.identity import credentials
+from rogertabs import runtime
+from rogertabs.identity import credentials
 from tests.conftest import REAL_LOOKUP
 
 
@@ -15,7 +15,7 @@ def test_venv_layout_per_os(tmp_path):
     assert runtime.venv_python(tmp_path, windows=False) == tmp_path / "bin" / "python"
 
 
-def test_everything_lives_under_meet_home(tmp_path):
+def test_everything_lives_under_rogertabs_home(tmp_path):
     home = tmp_path / "home"
     assert runtime.listener_venv() == home / "runtime" / "listener"
     assert runtime.models_dir() == home / "models"
@@ -36,7 +36,7 @@ def test_listener_resolution_order(tmp_path, monkeypatch):
     built.touch()
     assert runtime.listener_python() == built
 
-    monkeypatch.setenv("MEET_LISTENER_PYTHON", "/opt/custom/python")
+    monkeypatch.setenv("ROGERTABS_LISTENER_PYTHON", "/opt/custom/python")
     assert runtime.listener_python() == Path("/opt/custom/python")
 
 
@@ -51,7 +51,7 @@ def test_listener_env_is_offline_once_models_are_primed():
     assert "HF_HUB_OFFLINE" not in env
     runtime.write_manifest({"models_primed": True})
     env = runtime.listener_env()
-    assert env["HF_HUB_OFFLINE"] == "1" and env["MEET_MODELS_OFFLINE"] == "1"
+    assert env["HF_HUB_OFFLINE"] == "1" and env["ROGERTABS_MODELS_OFFLINE"] == "1"
     assert runtime.listener_env(offline=False).get("HF_HUB_OFFLINE") is None
 
 
@@ -66,13 +66,13 @@ def test_manifest_round_trip_and_corruption():
 
 def test_source_digest_tracks_listener_code(tmp_path):
     src = tmp_path / "listener"
-    (src / "meet_listen").mkdir(parents=True)
+    (src / "rogertabs_listen").mkdir(parents=True)
     # Bytes, not text: on Windows write_text turns "\n" into "\r\n", which
     # would turn the CRLF case below into "\r\r\n" and test nothing real.
-    (src / "meet_listen" / "a.py").write_bytes(b"x = 1\n")
+    (src / "rogertabs_listen" / "a.py").write_bytes(b"x = 1\n")
     (src / "requirements.lock").write_bytes(b"numpy==1\n")
     first = runtime.source_digest(src)
-    (src / "meet_listen" / "a.py").write_bytes(b"x = 1\r\n")
+    (src / "rogertabs_listen" / "a.py").write_bytes(b"x = 1\r\n")
     assert runtime.source_digest(src) == first  # a Windows checkout is the same code
     (src / "requirements.lock").write_bytes(b"numpy==2\n")
     assert runtime.source_digest(src) != first

@@ -1,8 +1,8 @@
 import json
 
-from meet.config import POLICY
-from meet.session import output
-from meet.session.meeting import Meeting
+from rogertabs.config import POLICY
+from rogertabs.session import output
+from rogertabs.session.meeting import Meeting
 
 FILES = {"transcript.md", "transcript.json", "speakers.json", "decisions.json", "actions.json",
          "state.json", "minutes.md"}

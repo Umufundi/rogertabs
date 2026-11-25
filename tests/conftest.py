@@ -1,7 +1,7 @@
 """Shared fixtures.
 
-Every test gets its own MEET_HOME, no Jev key, and no OS credential store, so
-the suite never touches ~/.meet, the network, or a real keychain. Voices are
+Every test gets its own ROGERTABS_HOME, no Jev key, and no OS credential store, so
+the suite never touches ~/.rogertabs, the network, or a real keychain. Voices are
 synthetic: each speaker is a random unit vector, and an utterance is that vector
 plus noise, tuned so same-speaker cosine sits near 0.9 and different speakers
 near 0. That is cleaner than real ECAPA, deliberately: these tests pin the
@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from meet import events
-from meet.identity import credentials, jev
-from meet.memory import db
+from rogertabs import events
+from rogertabs.identity import credentials, jev
+from rogertabs.memory import db
 
 # The real OS-store lookup, kept before the autouse fixture stubs it out.
 REAL_LOOKUP = credentials.lookup
@@ -33,11 +33,11 @@ MODEL = "ecapa-voxceleb@sb1"
 
 @pytest.fixture(autouse=True)
 def isolated(tmp_path, monkeypatch):
-    monkeypatch.setenv("MEET_HOME", str(tmp_path / "home"))
-    for var in ("TYPESAFE_API_KEY", "JEV_API_KEY", "MEET_LISTENER_PYTHON", "HF_HUB_OFFLINE",
-                "MEET_MODELS_OFFLINE", "HF_HOME", "MEET_MODEL_CACHE"):
+    monkeypatch.setenv("ROGERTABS_HOME", str(tmp_path / "home"))
+    for var in ("TYPESAFE_API_KEY", "JEV_API_KEY", "ROGERTABS_LISTENER_PYTHON", "HF_HUB_OFFLINE",
+                "ROGERTABS_MODELS_OFFLINE", "HF_HOME", "ROGERTABS_MODEL_CACHE"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr("meet.identity.credentials.lookup", lambda *a, **k: None)
+    monkeypatch.setattr("rogertabs.identity.credentials.lookup", lambda *a, **k: None)
     jev._stored_key.cache_clear()
     yield
     jev._stored_key.cache_clear()

@@ -37,7 +37,7 @@ def log(message: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="meet_listen")
+    parser = argparse.ArgumentParser(prog="rogertabs_listen")
     parser.add_argument("--devices", action="store_true", help="list input devices and exit")
     parser.add_argument("--wav", help="path to write the raw recording")
     parser.add_argument("--device", type=int, default=None)

@@ -4,8 +4,8 @@ The listener runtime used to be `listener/.venv/bin/python` inside the git
 checkout, which assumed Unix and tied a working install to wherever the source
 happened to be cloned. Everything durable now lives under one root:
 
-    ~/.meet/                       (%USERPROFILE%\\.meet on Windows)
-    ├── runtime/listener/          listener virtualenv, built by `meet setup`
+    ~/.rogertabs/                       (%USERPROFILE%\\.rogertabs on Windows)
+    ├── runtime/listener/          listener virtualenv, built by `rogertabs setup`
     ├── runtime/manifest.json      exactly what was installed, and from what
     ├── models/                    model weights (Hugging Face cache)
     ├── meetings/                  one directory per meeting
@@ -26,6 +26,7 @@ import platform
 import sys
 from pathlib import Path
 
+from .config import env as setting
 from .config import home, repo_root
 
 IS_WINDOWS = sys.platform == "win32"
@@ -67,10 +68,10 @@ def python_problem(version: tuple[int, ...] | None = None) -> tuple[str, str] | 
     if v in SUPPORTED_PYTHONS:
         return None
     shown = ".".join(map(str, v))
-    install = "Install Python 3.12 (Windows: `winget install Python.Python.3.12`) and reinstall Meet."
+    install = "Install Python 3.12 (Windows: `winget install Python.Python.3.12`) and reinstall Rogertabs."
     if v < SUPPORTED_PYTHONS[0]:
-        return f"Python {shown} is too old; Meet needs 3.12 or 3.13", install
-    return f"Python {shown} is newer than Meet has been verified on (3.12 and 3.13)", install
+        return f"Python {shown} is too old; Rogertabs needs 3.12 or 3.13", install
+    return f"Python {shown} is newer than Rogertabs has been verified on (3.12 and 3.13)", install
 
 
 def unsupported_reason(
@@ -81,7 +82,7 @@ def unsupported_reason(
 ) -> tuple[str, str] | None:
     """(problem, fix) when the listener stack cannot install here, else None.
 
-    Checked before `meet setup` downloads anything, so an unsupported machine
+    Checked before `rogertabs setup` downloads anything, so an unsupported machine
     gets one sentence instead of a pip resolver error. PyTorch publishes no
     Intel-Mac or native Windows-on-ARM wheels for the locked version.
     """
@@ -92,24 +93,24 @@ def unsupported_reason(
             return (
                 "Intel Macs are not supported (PyTorch no longer ships Intel-Mac builds)",
                 "Use an Apple Silicon Mac. If this IS Apple Silicon, your Python runs under "
-                "Rosetta: install the arm64 Python from python.org and reinstall Meet.",
+                "Rosetta: install the arm64 Python from python.org and reinstall Rogertabs.",
             )
         mac = macos_version() if mac is None else mac
         if mac and mac < MIN_MACOS:
             shown = ".".join(map(str, mac))
-            return (f"macOS {shown} is too old", "Meet needs macOS 12 (Monterey) or newer.")
+            return (f"macOS {shown} is too old", "Rogertabs needs macOS 12 (Monterey) or newer.")
         python = tuple((python or sys.version_info)[:2])
         if mac and mac < (13,) and python >= (3, 13):
             # onnxruntime ships Python 3.13 wheels only for macOS 13+.
             return (
-                "on macOS 12, Meet needs Python 3.12 (a dependency has no Python 3.13 build for it)",
-                "Install Python 3.12 from python.org, then reinstall Meet with it.",
+                "on macOS 12, Rogertabs needs Python 3.12 (a dependency has no Python 3.13 build for it)",
+                "Install Python 3.12 from python.org, then reinstall Rogertabs with it.",
             )
     if system == "win32" and machine == "arm64":
         return (
             "native ARM64 Python on Windows is not supported (PyTorch has no Windows ARM build)",
             "Install the x64 build of Python 3.12 from python.org (it runs under emulation) "
-            "and reinstall Meet.",
+            "and reinstall Rogertabs.",
         )
     return None
 
@@ -142,24 +143,24 @@ def listener_source() -> Path | None:
     """The listener package source: the checkout in development, the copy
     bundled into the wheel otherwise. None if neither exists."""
     for candidate in (repo_root() / "listener", Path(__file__).resolve().parent / "_listener"):
-        if (candidate / "meet_listen" / "__main__.py").exists():
+        if (candidate / "rogertabs_listen" / "__main__.py").exists():
             return candidate
     return None
 
 
 def dev_listener_python() -> Path:
-    """The pre-`meet setup` layout: a venv inside the checkout's listener/."""
+    """The pre-`rogertabs setup` layout: a venv inside the checkout's listener/."""
     return venv_python(repo_root() / "listener" / ".venv")
 
 
 def listener_python() -> Path | None:
     """Resolve the listener interpreter, most explicit first.
 
-    1. MEET_LISTENER_PYTHON, for tests and unusual installs;
-    2. the runtime `meet setup` builds under ~/.meet;
+    1. ROGERTABS_LISTENER_PYTHON, for tests and unusual installs;
+    2. the runtime `rogertabs setup` builds under ~/.rogertabs;
     3. a developer venv at listener/.venv in the checkout.
     """
-    override = os.environ.get("MEET_LISTENER_PYTHON")
+    override = setting("LISTENER_PYTHON")
     if override:
         return Path(override)
     for candidate in (venv_python(listener_venv()), dev_listener_python()):
@@ -170,7 +171,7 @@ def listener_python() -> Path | None:
 
 def listener_cwd(python: Path) -> Path:
     """Run the dev venv from the checkout so edits take effect without a
-    reinstall; run the installed runtime from ~/.meet so the checkout's copy
+    reinstall; run the installed runtime from ~/.rogertabs so the checkout's copy
     cannot shadow the version the manifest describes."""
     if python == dev_listener_python() and listener_source() is not None:
         return repo_root() / "listener"
@@ -180,30 +181,32 @@ def listener_cwd(python: Path) -> Path:
 def listener_env(*, offline: bool | None = None) -> dict[str, str]:
     """Environment for the listener process.
 
-    Models are cached under ~/.meet/models rather than the user's global
-    Hugging Face cache, so `meet forget`-style cleanup and backups have one
-    place to look. Once `meet setup` has primed the models, the listener runs
+    Models are cached under ~/.rogertabs/models rather than the user's global
+    Hugging Face cache, so `rogertabs forget`-style cleanup and backups have one
+    place to look. Once `rogertabs setup` has primed the models, the listener runs
     with the hub offline: a meeting must never depend on the network, and a
     model must never be silently updated between two meetings.
     """
     env = dict(os.environ)
     models = models_dir()
     env.setdefault("HF_HOME", str(models / "hf"))
-    env.setdefault("MEET_MODEL_CACHE", str(models / "ecapa"))
+    if not setting("MODEL_CACHE"):
+        env["ROGERTABS_MODEL_CACHE"] = str(models / "ecapa")
     env.setdefault("PYTHONIOENCODING", "utf-8")
     env.setdefault("PYTHONUNBUFFERED", "1")
     if offline is None:
         offline = bool(read_manifest().get("models_primed"))
     if offline:
         env.setdefault("HF_HUB_OFFLINE", "1")
-        env.setdefault("MEET_MODELS_OFFLINE", "1")
+        if not setting("MODELS_OFFLINE"):
+            env["ROGERTABS_MODELS_OFFLINE"] = "1"
     return env
 
 
 def source_digest(root: Path | None = None) -> str:
     """A short hash of the listener's code and lock.
 
-    Stored in the manifest at setup time; `meet doctor` compares it to the
+    Stored in the manifest at setup time; `rogertabs doctor` compares it to the
     current source so an updated checkout with a stale runtime is caught before
     a meeting rather than halfway through one.
     """
@@ -211,7 +214,7 @@ def source_digest(root: Path | None = None) -> str:
     if root is None:
         return ""
     h = hashlib.sha256()
-    code = sorted((root / "meet_listen").glob("*.py"))
+    code = sorted((root / "rogertabs_listen").glob("*.py"))
     files = [*code, root / "pyproject.toml", root / "requirements.lock"]
     for path in files:
         if path.exists():
