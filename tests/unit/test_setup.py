@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from meet import install, runtime
+from rogertabs import install, runtime
 
 LOCK = Path(__file__).resolve().parents[2] / "listener" / "requirements.lock"
 

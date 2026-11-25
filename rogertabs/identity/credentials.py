@@ -101,8 +101,78 @@ def lookup(service: str, *, platform: str | None = None) -> str | None:
     return None
 
 
+def _write_windows(service: str, secret: str, account: str) -> bool:
+    import ctypes
+    from ctypes import wintypes
+
+    class CREDENTIAL(ctypes.Structure):
+        _fields_ = [
+            ("Flags", wintypes.DWORD),
+            ("Type", wintypes.DWORD),
+            ("TargetName", wintypes.LPWSTR),
+            ("Comment", wintypes.LPWSTR),
+            ("LastWritten", wintypes.FILETIME),
+            ("CredentialBlobSize", wintypes.DWORD),
+            ("CredentialBlob", ctypes.POINTER(ctypes.c_ubyte)),
+            ("Persist", wintypes.DWORD),
+            ("AttributeCount", wintypes.DWORD),
+            ("Attributes", ctypes.c_void_p),
+            ("TargetAlias", wintypes.LPWSTR),
+            ("UserName", wintypes.LPWSTR),
+        ]
+
+    blob = secret.encode("utf-16-le")  # what cmdkey writes, so every reader agrees
+    buffer = (ctypes.c_ubyte * len(blob)).from_buffer_copy(blob)
+    cred = CREDENTIAL()
+    cred.Type = 1  # CRED_TYPE_GENERIC
+    cred.TargetName = service
+    cred.UserName = account
+    cred.CredentialBlobSize = len(blob)
+    cred.CredentialBlob = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_ubyte))
+    cred.Persist = 2  # CRED_PERSIST_LOCAL_MACHINE
+    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)  # type: ignore[attr-defined]
+    advapi32.CredWriteW.argtypes = [ctypes.POINTER(CREDENTIAL), wintypes.DWORD]
+    advapi32.CredWriteW.restype = wintypes.BOOL
+    return bool(advapi32.CredWriteW(ctypes.byref(cred), 0))
+
+
+def store(service: str, secret: str, *, platform: str | None = None, account: str = "rogertabs") -> bool:
+    """Save `secret` under `service` in the OS store. False on any failure."""
+    platform = platform or sys.platform
+    try:
+        if platform == "win32":
+            return _write_windows(service, secret, account)
+        if platform == "darwin":
+            argv = ["security", "add-generic-password", "-U", "-s", service, "-a", account, "-w", secret]
+            return subprocess.run(argv, capture_output=True, timeout=5).returncode == 0
+        if shutil.which("secret-tool"):
+            argv = ["secret-tool", "store", f"--label={service}", "service", service]
+            return subprocess.run(argv, input=secret, text=True, capture_output=True,
+                                  timeout=5).returncode == 0
+    except Exception:
+        return False
+    return False
+
+
+def lookup_migrating(
+    service: str, legacy_service: str | None = None, *, platform: str | None = None
+) -> str | None:
+    """Read `service`; if it is absent, fall back to the name a previous version
+    used and copy the secret forward under the new name, so the next read finds
+    it there. The old entry is left in place: a stored credential is never lost,
+    and an older install on the same machine keeps working."""
+    extra = {"platform": platform} if platform else {}
+    value = lookup(service, **extra)
+    if value or not legacy_service or legacy_service == service:
+        return value
+    value = lookup(legacy_service, **extra)
+    if value:
+        store(service, value, **extra)
+    return value
+
+
 def where(platform: str | None = None) -> str:
-    """How to store the key on this OS, for `meet doctor`."""
+    """How to store the key on this OS, for `rogertabs doctor`."""
     platform = platform or sys.platform
     if platform == "win32":
         return 'cmdkey /generic:"TypeSafe API Key" /user:typesafe /pass:<key>'

@@ -186,7 +186,7 @@ SCHEMA_VERSION = 1
 
 
 class DatabaseTooNew(RuntimeError):
-    """voices.db was written by a newer Meet. Opening it here could corrupt it."""
+    """voices.db was written by a newer Rogertabs. Opening it here could corrupt it."""
 
 
 def schema_version(conn: sqlite3.Connection) -> int:
@@ -202,7 +202,8 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
     if found > SCHEMA_VERSION:
         conn.close()
         raise DatabaseTooNew(
-            f"{target} is schema {found}, this Meet understands up to {SCHEMA_VERSION}; upgrade Meet"
+            f"{target} is schema {found}, this Rogertabs understands up to {SCHEMA_VERSION}; "
+            "upgrade Rogertabs"
         )
     conn.executescript(SCHEMA)
     if found < SCHEMA_VERSION:
@@ -212,7 +213,7 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
     if first:
         # Voiceprints are biometric data. Nobody else on the machine reads them.
         # On Windows chmod only toggles read-only, so this is a no-op there and
-        # the user-profile ACL on %USERPROFILE%\.meet is what protects it.
+        # the user-profile ACL on %USERPROFILE%\.rogertabs is what protects it.
         target.chmod(0o600)
     return conn
 

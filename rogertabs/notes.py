@@ -3,22 +3,24 @@
 The notes pass (transcript clean-up, task tagging, summary and minutes) is slow
 and heavy, so it runs in its own window after the meeting has been written,
 never inside the live loop. It is optional: without it the meeting record is
-exactly what Meet always wrote.
+exactly what Rogertabs always wrote.
 
-MEET_NOTES_CMD overrides where the command lives; the default is the
-meet-notes.cmd that the local post-processing setup installs.
+ROGERTABS_NOTES_CMD overrides where the command lives; the default is the
+meet-notes.cmd that the local post-processing setup installs (a separate tool in
+~/.meet-post that keeps its own name).
 """
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
+from .config import env as setting
+
 
 def command() -> Path | None:
-    configured = os.environ.get("MEET_NOTES_CMD")
+    configured = setting("NOTES_CMD")
     path = Path(configured) if configured else Path.home() / ".meet-post" / "meet-notes.cmd"
     return path if path.is_file() else None
 

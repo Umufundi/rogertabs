@@ -1,6 +1,6 @@
-from meet.config import POLICY
-from meet.identity.policy import Action, decide, should_consult_jev
-from meet.memory.people import Candidate, MatchResult
+from rogertabs.config import POLICY
+from rogertabs.identity.policy import Action, decide, should_consult_jev
+from rogertabs.memory.people import Candidate, MatchResult
 
 
 def cand(slug, sim):

@@ -151,7 +151,8 @@ class Endpointer:
         # Two positive 32-ms VAD frames is the smallest useful speech event;
         # longer turns still use the configured minimum segment duration.
         min_speech_samples = min(self.min_segment_samples, 2 * FRAME)
-        if pcm.size < self.min_segment_samples or self._speech_duration_too_short(speech_s, min_speech_samples):
+        too_short = self._speech_duration_too_short(speech_s, min_speech_samples)
+        if pcm.size < self.min_segment_samples or too_short:
             return None
 
         speech_power = float(np.mean(pcm.astype(np.float64) ** 2))

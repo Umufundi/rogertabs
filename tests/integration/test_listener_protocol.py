@@ -12,13 +12,13 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from meet import events, runtime, sidecar
-from meet.cli import app
-from meet.config import POLICY
-from meet.memory import db
-from meet.session import output
-from meet.session.meeting import Meeting
-from meet.ui import plain
+from rogertabs import events, runtime, sidecar
+from rogertabs.cli import app
+from rogertabs.config import POLICY
+from rogertabs.memory import db
+from rogertabs.session import output
+from rogertabs.session.meeting import Meeting
+from rogertabs.ui import plain
 
 FAKE = Path(__file__).resolve().parents[1] / "fixtures" / "fake_listener"
 
@@ -55,7 +55,7 @@ def scenario(tmp_path, monkeypatch, voices):
 
 
 def fake_listener(tmp_path):
-    return sidecar.Listener(tmp_path / "audio.wav", command=[sys.executable, "-m", "meet_listen"],
+    return sidecar.Listener(tmp_path / "audio.wav", command=[sys.executable, "-m", "rogertabs_listen"],
                             cwd=FAKE)
 
 
@@ -111,7 +111,7 @@ def test_backpressure_sheds_meter_ticks_never_speech(tmp_path):
 
 def test_missing_runtime_is_a_clear_error(monkeypatch, tmp_path):
     monkeypatch.setattr(runtime, "listener_python", lambda: None)
-    with pytest.raises(sidecar.ListenerMissing, match="meet setup"):
+    with pytest.raises(sidecar.ListenerMissing, match="rogertabs setup"):
         sidecar.Listener(tmp_path / "a.wav")
 
 
@@ -128,10 +128,10 @@ def test_fatal_listener_error_ends_the_meeting(tmp_path, conn, monkeypatch):
 
 
 def test_cli_replay_offline_without_jev(tmp_path, monkeypatch, scenario, voices):
-    """`meet replay` through the real CLI and the real `python -m meet_listen`
+    """`rogertabs replay` through the real CLI and the real `python -m rogertabs_listen`
     launch path, with no network, no API key, and no models."""
     scenario()
-    monkeypatch.setenv("MEET_LISTENER_PYTHON", sys.executable)
+    monkeypatch.setenv("ROGERTABS_LISTENER_PYTHON", sys.executable)
     monkeypatch.setenv("PYTHONPATH", str(FAKE))
     wav = tmp_path / "in.wav"
     wav.write_bytes(b"RIFF")

@@ -37,7 +37,7 @@ av==14.2.0 \
     --hash=sha256:e7647d4a8d1855d05fe70784a962b15e103a2d4a0eba1dea7bfbfd95753dedb9 \
     --hash=sha256:f9e9a2bcb675916b1565dfe7dfad62d195c15a72dc4a56ac3b4006bac1d241d5
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   faster-whisper
 certifi==2026.7.22 \
     --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775 \
@@ -410,7 +410,7 @@ cuda-toolkit==13.0.2 ; sys_platform == 'linux' \
     # via torch
 faster-whisper==1.2.1 \
     --hash=sha256:79a66ad50688c0b794dd501dc340a736992a6342f7f95e5811be60b5224a26a7
-    # via meet-listen (pyproject.toml)
+    # via rogertabs-listen (pyproject.toml)
 filelock==4.0.6 \
     --hash=sha256:323fab3b2fb22d889b29fa83774f60029addddb4b6a1bcfa1e73066eabffb5f2 \
     --hash=sha256:9b139fb93b2ac5807f7feaf63aa4546fbd74074a2d3f554c040f40a4694d7b9f
@@ -654,7 +654,7 @@ numpy==2.5.3 \
     --hash=sha256:fc36dc566135b5eceec4cf89758fcb719266a019ef07dae1754ae7c9f617ef3e \
     --hash=sha256:ffdc76bfcae6b255dff75202c5e7feaf95b40246bc0a17944facc1fecf9f79ab
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   ctranslate2
     #   onnxruntime
     #   scipy
@@ -768,7 +768,7 @@ onnxruntime==1.19.2 ; python_full_version < '3.13' \
     --hash=sha256:e3a4ce906105d99ebbe817f536d50a91ed8a4d1592553f49b3c23c4be2560ae6 \
     --hash=sha256:fae4b4de45894b9ce7ae418c5484cbf0341db6813effec01bb2216091c52f7fb
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   faster-whisper
 onnxruntime==1.23.2 ; python_full_version >= '3.13' \
     --hash=sha256:0be6a37a45e6719db5120e9986fcd30ea205ac8103fd1fb74b6c33348327a0cc \
@@ -794,7 +794,7 @@ onnxruntime==1.23.2 ; python_full_version >= '3.13' \
     --hash=sha256:da44b99206e77734c5819aa2142c69e64f3b46edc3bd314f6a45a932defc0b3e \
     --hash=sha256:e2b9233c4947907fd1818d0e581c049c41ccc39b2856cc942ff6d26317cee145
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   faster-whisper
 packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
@@ -1100,7 +1100,7 @@ setuptools==81.0.0 \
 silero-vad==6.2.3 \
     --hash=sha256:7b7f5436cfcb02fae583a05b512ea96467fd449fe54cb49a5e4f06c51a1e43b8 \
     --hash=sha256:d7a23b09202be4953915cb9173089bb307eed0418a9bd4794d9ec5af07fa1996
-    # via meet-listen (pyproject.toml)
+    # via rogertabs-listen (pyproject.toml)
 sounddevice==0.5.6 \
     --hash=sha256:7f4162f514f007b0bf25a3ccfed3f1705bc2ec311888a90232729eec4f57a4f4 \
     --hash=sha256:8ec9fbfde2e32f020b167e348f3ab3bac6625a5f15af524d790108ac7147a410 \
@@ -1108,7 +1108,7 @@ sounddevice==0.5.6 \
     --hash=sha256:c8ae19173e5f27f8c12d4b5eee2dbfe542cee125d591e663e0fb4dfb75246d45 \
     --hash=sha256:de099612311ad81e55d31ccbd83f43ea6bf4d87b48f9b6ea55a1fbcde0eee4e0 \
     --hash=sha256:e3aef00ad8b1d1740eb66d9a7671eab88a4d2b8fa4ab33498d742e63b65c309c
-    # via meet-listen (pyproject.toml)
+    # via rogertabs-listen (pyproject.toml)
 soundfile==0.14.0 \
     --hash=sha256:0a6ae43c50c71b4e020cc55382925cb89451c1ed1a0c3d0f5d802da269226849 \
     --hash=sha256:19be05428da76ed61a4cad29b8e4bcf43a3e5c100089d2ec81dc961eed1b0dd4 \
@@ -1120,12 +1120,12 @@ soundfile==0.14.0 \
     --hash=sha256:e090704718e124e7c844695236f1fce8d18a5e761eaf7c82dfcd124620805f98 \
     --hash=sha256:e85724a90bc99a6e8062c0b4ddf725f53b2a3b70afd4da875e9d2cfc4e92f377
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   speechbrain
 speechbrain==1.1.1 \
     --hash=sha256:3b69d9341662478b3c564837613f7a87bfcfd40d88cd54b4d19d2cca31e3dd3d \
     --hash=sha256:de4f78d3564d40443e11e01648b00b4c47a6f942558c7ab08b5c350264ffcd7c
-    # via meet-listen (pyproject.toml)
+    # via rogertabs-listen (pyproject.toml)
 sympy==1.14.0 \
     --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
     --hash=sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5
@@ -1181,7 +1181,7 @@ torch==2.11.0 \
     --hash=sha256:f99924682ef0aa6a4ab3b1b76f40dc6e273fca09f367d15a524266db100a723f \
     --hash=sha256:fbf39280699d1b869f55eac536deceaa1b60bd6788ba74f399cc67e60a5fab10
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   silero-vad
     #   speechbrain
 torchaudio==2.11.0 \
@@ -1214,7 +1214,7 @@ torchaudio==2.11.0 \
     --hash=sha256:e3f9696a9ef1d49acc452159b052370c636406d072e9d8f10895fda87b591ea9 \
     --hash=sha256:ed404c4399ad7f172c86a47c1b25293d322d1d58e26b10b0456a86cf67d37d84
     # via
-    #   meet-listen (pyproject.toml)
+    #   rogertabs-listen (pyproject.toml)
     #   speechbrain
 tqdm==4.70.1 \
     --hash=sha256:c293e525e6fef9c20e8728fd4612df02a0aa31bb5fe91ecd93e123b1b7bffa73 \

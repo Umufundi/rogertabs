@@ -28,7 +28,7 @@ class Command:
 # The one list every frontend reads: the `/` menu, completion, and help all
 # come from here, so they cannot drift apart. `:name` works too, for habit.
 COMMANDS = (
-    Command("people", "", "who is speaking, and how sure Meet is about each"),
+    Command("people", "", "who is speaking, and how sure Rogertabs is about each"),
     Command("name", "<speaker#> <name>", "name a speaker directly"),
     Command("wrong", "<name>", "the last line was actually this person"),
     Command("merge", "<a> <b>", "speakers a and b are the same person"),
@@ -193,7 +193,7 @@ def _skip(meeting: Meeting) -> Result:
 def complete_name(meeting: Meeting, typed: str) -> str | None:
     """Tab on a partly typed name: the first known person it could be.
 
-    People already named in this meeting come first, then everyone Meet has a
+    People already named in this meeting come first, then everyone Rogertabs has a
     voice for, so the likely answer is the one Tab lands on.
     """
     prefix = typed.strip().lower()

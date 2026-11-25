@@ -16,7 +16,7 @@ from .memory import db
 from .session import output
 from .session.meeting import Meeting
 from .ui import plain
-from .ui.app import MeetApp
+from .ui.app import RogertabsApp
 
 app = typer.Typer(add_completion=False, help="Who is speaking, resolved live, taught by a human.")
 
@@ -88,12 +88,12 @@ def setup(
 
 @app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def update(ctx: typer.Context) -> None:
-    """Update Meet to the latest version (`--check` only reports)."""
+    """Update Rogertabs to the latest version (`--check` only reports)."""
     if runtime.IS_WINDOWS and Path(sys.argv[0]).suffix.lower() == ".exe":
-        # Started through the old meet.exe launcher, which this very update
+        # Started through the old rogertabs.exe launcher, which this very update
         # would have to overwrite while it runs. Newer installs never get here.
-        typer.secho("this install predates `meet update`: run scripts\\install.ps1 from a fresh "
-                    "download once, and `meet update` works from then on", fg=typer.colors.YELLOW)
+        typer.secho("this install predates `rogertabs update`: run scripts\\install.ps1 from a fresh "
+                    "download once, and `rogertabs update` works from then on", fg=typer.colors.YELLOW)
         raise typer.Exit(1)
     from . import update as updater
 
@@ -148,7 +148,7 @@ def forget(name: str) -> None:
 def start(
     title: str = typer.Option("Meeting", "--title", "-t"),
     attendees: str = typer.Option("", "--people", "-p", help="comma-separated expected attendees"),
-    mic: int | None = typer.Option(None, "--mic", help="input device index from `meet devices`"),
+    mic: int | None = typer.Option(None, "--mic", help="input device index from `rogertabs devices`"),
     model: str | None = typer.Option(None, "--model", help="faster-whisper model (default: from setup)"),
     no_jev: bool = typer.Option(False, "--no-jev", help="never consult Jev; ask the human instead"),
     no_extract: bool = typer.Option(False, "--no-extract", help="skip decision/action extraction"),
@@ -210,7 +210,7 @@ def _run(
     plain_ui: bool = False,
 ) -> None:
     roster = [name.strip() for name in attendees.split(",") if name.strip()]
-    # The model `meet setup` downloaded; meetings run offline, so any other
+    # The model `rogertabs setup` downloaded; meetings run offline, so any other
     # model would fail to load.
     model = model or runtime.read_manifest().get("asr_model") or "small.en"
     try:
@@ -257,7 +257,7 @@ def _run(
                     idle_timeout=2.0 if source is not None else None,
                 )
             else:
-                MeetApp(meeting, listener, directory).run()
+                RogertabsApp(meeting, listener, directory).run()
     except KeyboardInterrupt:
         typer.echo("\nstopping: finishing the transcript (Ctrl+C again to stop at once)", err=True)
         listener.stop()

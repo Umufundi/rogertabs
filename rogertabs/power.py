@@ -6,7 +6,7 @@ asks the OS not to sleep for as long as the meeting runs, and nothing more:
 the screen may still turn off, and closing a laptop lid still sleeps it.
 
     Windows   SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
-    macOS     `caffeinate -i -w <pid>` (ends by itself if Meet dies)
+    macOS     `caffeinate -i -w <pid>` (ends by itself if Rogertabs dies)
     Linux     `systemd-inhibit` where available
 
 Every path is best effort. Failing to hold the machine awake is reported, never
@@ -35,7 +35,7 @@ def keep_awake(platform: str | None = None) -> Iterator[bool]:
     elif platform == "darwin":
         yield from _helper(["caffeinate", "-i", "-w", str(os.getpid())])
     elif shutil.which("systemd-inhibit"):
-        yield from _helper(["systemd-inhibit", "--what=sleep:idle", "--who=meet",
+        yield from _helper(["systemd-inhibit", "--what=sleep:idle", "--who=rogertabs",
                             "--why=recording a meeting", "sleep", "infinity"])
     else:
         yield False

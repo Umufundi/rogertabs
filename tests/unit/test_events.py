@@ -1,6 +1,6 @@
 import json
 
-from meet import events
+from rogertabs import events
 
 
 def test_blank_and_junk_lines_are_ignored():

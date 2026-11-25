@@ -22,21 +22,21 @@ from . import events, runtime
 
 
 class ListenerMissing(RuntimeError):
-    """The listener venv has not been built yet. `meet setup` creates it."""
+    """The listener venv has not been built yet. `rogertabs setup` creates it."""
 
 
 def _interpreter() -> Path:
     python = runtime.listener_python()
     if python is None or not python.exists():
         where = python or runtime.venv_python(runtime.listener_venv())
-        raise ListenerMissing(f"listener runtime not found at {where}; run `meet setup` first")
+        raise ListenerMissing(f"listener runtime not found at {where}; run `rogertabs setup` first")
     return python
 
 
 def listener_command() -> tuple[list[str], Path]:
     """argv prefix and working directory for launching the listener."""
     python = _interpreter()
-    return [str(python), "-m", "meet_listen"], runtime.listener_cwd(python)
+    return [str(python), "-m", "rogertabs_listen"], runtime.listener_cwd(python)
 
 
 def _no_window() -> int:
@@ -56,7 +56,7 @@ class Listener:
         command: list[str] | None = None,
         cwd: Path | None = None,
     ) -> None:
-        # `command` replaces `python -m meet_listen`; tests use it to put a
+        # `command` replaces `python -m rogertabs_listen`; tests use it to put a
         # scripted listener behind the real process boundary.
         if command is None:
             command, default_cwd = listener_command()
@@ -284,6 +284,6 @@ def list_devices() -> str:
     return _run_listener(["--devices"], timeout=60).stdout or ""
 
 
-if __name__ == "__main__":  # manual probe: python -m meet.sidecar
+if __name__ == "__main__":  # manual probe: python -m rogertabs.sidecar
     ok, detail = check_listener()
     print(detail, file=sys.stderr if not ok else sys.stdout)

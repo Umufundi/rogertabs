@@ -1,4 +1,4 @@
-"""`meet doctor`: one screen that says whether a meeting will work, and if not, why.
+"""`rogertabs doctor`: one screen that says whether a meeting will work, and if not, why.
 
 Every check is a small function returning a `Check`. A failed check always
 carries the one thing the user should do next, in plain words; stack traces
@@ -21,7 +21,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import metadata
 
-from . import runtime, sidecar
+from . import config, runtime, sidecar
 from .config import db_path, home
 from .identity import credentials, jev
 from .memory import db
@@ -57,9 +57,9 @@ class Report:
         return [c for c in self.checks if c.status == FAIL]
 
 
-def meet_version() -> str:
+def rogertabs_version() -> str:
     try:
-        return metadata.version("meet")
+        return metadata.version("rogertabs")
     except metadata.PackageNotFoundError:
         return "dev"
 
@@ -81,7 +81,7 @@ def mic_fix() -> str:
         )
         return (
             f"Windows may be blocking the microphone. Open {where}, turn on "
-            "\"Allow desktop apps to access your microphone\", then run `meet doctor --audio`."
+            "\"Allow desktop apps to access your microphone\", then run `rogertabs doctor --audio`."
         )
     if runtime.IS_MACOS:
         # macOS 13 replaced System Preferences with System Settings.
@@ -90,8 +90,8 @@ def mic_fix() -> str:
             if runtime.macos_version() >= (13,)
             else "System Preferences > Security & Privacy > Privacy > Microphone"
         )
-        return f"Allow your terminal in {where}, then run `meet doctor --audio`."
-    return "Check the input is not muted (e.g. `pavucontrol`), then run `meet doctor --audio`."
+        return f"Allow your terminal in {where}, then run `rogertabs doctor --audio`."
+    return "Check the input is not muted (e.g. `pavucontrol`), then run `rogertabs doctor --audio`."
 
 
 # ── individual sections ─────────────────────────────────────────────────
@@ -110,7 +110,7 @@ def _runtime(report: Report, probe: dict | None, manifest: dict) -> None:
 
     python = runtime.listener_python()
     if python is None or not python.exists():
-        report.add(s, "listener runtime", FAIL, "not installed", "Run `meet setup`.")
+        report.add(s, "listener runtime", FAIL, "not installed", "Run `rogertabs setup`.")
         return
     report.add(s, "listener runtime", OK, str(python))
 
@@ -119,7 +119,7 @@ def _runtime(report: Report, probe: dict | None, manifest: dict) -> None:
     if not probe.get("ok"):
         errors = probe.get("errors") or [probe.get("error") or "unknown error"]
         report.add(s, "listener dependencies", FAIL, "; ".join(map(str, errors))[:300],
-                   "Run `meet setup --force` to rebuild the listener runtime.")
+                   "Run `rogertabs setup --force` to rebuild the listener runtime.")
         return
     installed = probe.get("packages") or {}
     expected = manifest.get("packages") or {}
@@ -130,7 +130,7 @@ def _runtime(report: Report, probe: dict | None, manifest: dict) -> None:
     )
     if drift:
         report.add(s, "dependencies", WARN, "differ from setup: " + ", ".join(drift),
-                   "Run `meet setup --force` to restore the locked versions.")
+                   "Run `rogertabs setup --force` to restore the locked versions.")
     else:
         torch = installed.get("torch")
         report.add(s, "dependencies", OK, f"torch {torch}" if torch else "")
@@ -138,8 +138,8 @@ def _runtime(report: Report, probe: dict | None, manifest: dict) -> None:
     recorded = manifest.get("listener_digest")
     current = runtime.source_digest()
     if recorded and current and recorded != current:
-        report.add(s, "listener code", WARN, "changed since `meet setup`",
-                   "Run `meet setup` so the runtime matches this version of Meet.")
+        report.add(s, "listener code", WARN, "changed since `rogertabs setup`",
+                   "Run `rogertabs setup` so the runtime matches this version of Rogertabs.")
 
 
 def _database(report: Report) -> None:
@@ -148,7 +148,7 @@ def _database(report: Report) -> None:
         conn = db.connect()
         ok = conn.execute("PRAGMA integrity_check").fetchone()[0]
     except db.DatabaseTooNew as exc:
-        report.add(s, "database", FAIL, str(exc), "Install the newer Meet that wrote this database.")
+        report.add(s, "database", FAIL, str(exc), "Install the newer Rogertabs that wrote this database.")
         return
     except (sqlite3.Error, OSError) as exc:
         report.add(s, "database", FAIL, str(exc), f"Check that {db_path()} is readable and not locked.")
@@ -165,7 +165,7 @@ def _models(report: Report, manifest: dict, loaded: dict | None) -> None:
     s = "Models"
     if not manifest.get("models_primed"):
         report.add(s, "speech and voice models", FAIL, "not downloaded yet",
-                   "Run `meet setup` (needs internet once; meetings then run offline).")
+                   "Run `rogertabs setup` (needs internet once; meetings then run offline).")
         return
     report.add(s, f"Whisper {manifest.get('asr_model', '?')}", OK)
     report.add(s, f"speaker model {manifest.get('embed_model', '?')}", OK)
@@ -177,7 +177,7 @@ def _models(report: Report, manifest: dict, loaded: dict | None) -> None:
         report.add(s, "offline load", OK, ", ".join(f"{k} {v}s" for k, v in t.items()))
     else:
         report.add(s, "offline load", FAIL, str(loaded.get("error")),
-                   "Run `meet setup --force` to download the models again.")
+                   "Run `rogertabs setup --force` to download the models again.")
 
 
 def _audio(report: Report, probe: dict | None, mic: dict | None) -> None:
@@ -187,7 +187,7 @@ def _audio(report: Report, probe: dict | None, mic: dict | None) -> None:
     if probe.get("audio_error"):
         report.add(s, "audio backend", FAIL, str(probe["audio_error"]),
                    "Linux: install PortAudio (`sudo apt install libportaudio2`). "
-                   "Windows/macOS: run `meet setup --force`.")
+                   "Windows/macOS: run `rogertabs setup --force`.")
         return
     devices = probe.get("devices") or []
     if not devices:
@@ -200,7 +200,7 @@ def _audio(report: Report, probe: dict | None, mic: dict | None) -> None:
         report.add(s, f"Microphone: {named}", OK, f"{len(devices)} input(s) available")
     else:
         report.add(s, "microphone", WARN, f"{len(devices)} input(s), no system default",
-                   "Pick one with `meet devices`, then `meet start --mic <index>`.")
+                   "Pick one with `rogertabs devices`, then `rogertabs start --mic <index>`.")
 
     if mic is None:
         return
@@ -247,7 +247,12 @@ def _storage(report: Report) -> None:
         probe.unlink()
         report.add(s, f"{root} writable", OK)
     except OSError as exc:
-        report.add(s, f"{root} writable", FAIL, str(exc), "Check folder permissions or set MEET_HOME.")
+        report.add(s, f"{root} writable", FAIL, str(exc), "Check folder permissions or set ROGERTABS_HOME.")
+    old = config.legacy_home()
+    if old.is_dir() and old.resolve() != root.resolve() and (old / "voices.db").exists():
+        report.add(s, "old Meet folder", WARN, f"{old} still holds a voices.db",
+                   f"Rogertabs uses {root}. Nothing is lost: copy anything you still need from "
+                   f"{old}, then delete it.")
 
 
 def _identity(report: Report, embed_model: str | None) -> None:
@@ -330,7 +335,7 @@ def _marks() -> dict[str, str]:
 
 def render(report: Report, *, verbose: bool = False) -> str:
     marks = _marks()
-    out = [f"MEET {meet_version()}", os_name(), ""]
+    out = [f"ROGERTABS {rogertabs_version()}", os_name(), ""]
     section = None
     for check in report.checks:
         if check.section != section:

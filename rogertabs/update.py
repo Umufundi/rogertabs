@@ -1,18 +1,18 @@
-"""`meet update`: pull the latest Meet and reinstall it in place.
+"""`rogertabs update`: pull the latest Rogertabs and reinstall it in place.
 
-    meet update            update if there is anything new, then run setup
-    meet update --check    only say whether an update is waiting
+    rogertabs update            update if there is anything new, then run setup
+    rogertabs update --check    only say whether an update is waiting
 
-Meet keeps its own clone of the repository in ~/.meet/src, and Git does the
+Rogertabs keeps its own clone of the repository in ~/.rogertabs/src, and Git does the
 fetching: for a private fork it already knows how to sign in to GitHub (Git for
 Windows remembers the login after one browser sign-in), and nothing here ever
 handles a password or token.
 
 This module deliberately imports nothing beyond the standard library and
-`meet.config`/`meet.runtime`. On Windows a file that a running process has
-loaded cannot be replaced; the updater runs as `python -m meet update`, which
-dispatches here before the rest of Meet (numpy, the UI) is ever imported, so
-pip is free to replace all of it. `meet setup` then runs in a fresh process,
+`rogertabs.config`/`rogertabs.runtime`. On Windows a file that a running process has
+loaded cannot be replaced; the updater runs as `python -m rogertabs update`, which
+dispatches here before the rest of Rogertabs (numpy, the UI) is ever imported, so
+pip is free to replace all of it. `rogertabs setup` then runs in a fresh process,
 on the new code, and rebuilds only what changed. Models are never re-downloaded.
 """
 
@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -29,10 +28,11 @@ from collections.abc import Callable
 from pathlib import Path
 
 from . import runtime
+from .config import env as setting
 from .config import home
 
-REPO = os.environ.get("MEET_REPO", "https://github.com/Umufundi/meet.git")
-BRANCH = os.environ.get("MEET_BRANCH", "main")
+REPO = setting("REPO", "https://github.com/Umufundi/rogertabs.git")
+BRANCH = setting("BRANCH", "main")
 
 
 class UpdateFailed(RuntimeError):
@@ -72,7 +72,7 @@ SIGN_IN_FIX = (
     "      Check which account Git uses:   git credential-manager github list\n"
     "      Sign in (opens a browser):      git credential-manager github login\n"
     "      Remove a wrong account first:   git credential-manager github logout <name>\n"
-    "      then run `meet update` again. (No `git credential-manager`? `winget upgrade Git.Git`.)"
+    "      then run `rogertabs update` again. (No `git credential-manager`? `winget upgrade Git.Git`.)"
 )
 
 
@@ -82,8 +82,8 @@ def failure_fix(stderr: str) -> str:
     if any(sign in text for sign in SIGN_IN_SIGNS):
         return SIGN_IN_FIX
     if "could not resolve host" in text or "unable to access" in text:
-        return "Check your internet connection and run `meet update` again."
-    return "Run `meet update` again; if it keeps failing, send the message above."
+        return "Check your internet connection and run `rogertabs update` again."
+    return "Run `rogertabs update` again; if it keeps failing, send the message above."
 
 
 def _git(git: str, *args: str, cwd: Path | None = None, interactive: bool = False) -> str:
@@ -106,30 +106,56 @@ def _git(git: str, *args: str, cwd: Path | None = None, interactive: bool = Fals
     return (proc.stdout or "").strip()
 
 
+def _is_old_repo_url(url: str) -> bool:
+    """The pre-rename repository (https or ssh, with or without `.git`)."""
+    tail = url.strip().rstrip("/").lower()
+    tail = tail[: -len(".git")] if tail.endswith(".git") else tail
+    return tail.endswith("/umufundi/meet") or tail.endswith(":umufundi/meet")
+
+
+def retarget_origin(git: str, src: Path, repo: str | None = None) -> bool:
+    """Point the checkout's `origin` at the renamed repository. GitHub redirects
+    the old address, but the redirect is a courtesy that ends the day someone
+    creates a new `meet` repository there. A remote that is not the old address
+    (a fork, a mirror, a local path) is not ours to touch. True if rewritten."""
+    repo = repo or REPO
+    try:
+        # The configured address, not `remote get-url` (which applies insteadOf rewrites).
+        current = _git(git, "config", "--get", "remote.origin.url", cwd=src)
+    except UpdateFailed:
+        return False
+    if current == repo or not _is_old_repo_url(current):
+        return False
+    _git(git, "remote", "set-url", "origin", repo, cwd=src)
+    return True
+
+
 def _pip_install(src: Path) -> None:
     """Reinstall the core app from the updated source, into this interpreter."""
     pip = [sys.executable, "-m", "pip", "--disable-pip-version-check", "install", "--no-input", "--quiet"]
     for argv, what in (
         ([*pip, "--require-hashes", "--no-deps", "-r", str(src / "requirements.lock")], "dependencies"),
-        ([*pip, "--no-deps", "--force-reinstall", str(src)], "Meet"),
+        ([*pip, "--no-deps", "--force-reinstall", str(src)], "Rogertabs"),
     ):
         if subprocess.run(argv).returncode != 0:
             raise UpdateFailed(
-                f"installing {what} failed", "Check your internet connection and run `meet update` again."
+                f"installing {what} failed",
+                "Check your internet connection and run `rogertabs update` again.",
             )
 
 
 def _setup() -> int:
-    """`meet setup` on the NEW code, in a fresh interpreter.
+    """`rogertabs setup` on the NEW code, in a fresh interpreter.
 
     `-P` keeps the current folder off sys.path. Without it, running from a
-    folder that holds a Meet checkout (an unzipped download, ~/.meet/src)
-    silently runs THAT copy of Meet instead of the one just installed.
+    folder that holds a Rogertabs checkout (an unzipped download, ~/.rogertabs/src)
+    silently runs THAT copy of Rogertabs instead of the one just installed.
     """
-    return subprocess.run([sys.executable, "-P", "-m", "meet", "setup"]).returncode
+    return subprocess.run([sys.executable, "-P", "-m", "rogertabs", "setup"]).returncode
 
 
-# The launchers written before `-P`, exactly as the installers wrote them.
+# The launchers written before `-P`, exactly as the installers wrote them. They
+# are named for the old command and run the old module, which is now the alias.
 _OLD_CMD = re.compile(rb'^@"([^"\r\n]+)" -m meet %\*\r\n\Z')
 _OLD_SH = re.compile(rb'^#!/bin/sh\nexec "([^"\n]+)" -m meet "\$@"\n\Z')
 
@@ -172,22 +198,25 @@ def run(
     git = git or shutil.which("git")
     if not git:
         raise UpdateFailed(
-            "Git is needed for `meet update`",
-            "Install it with `winget install Git.Git`, open a new PowerShell window, and run `meet update`.",
+            "Git is needed for `rogertabs update`",
+            "Install it with `winget install Git.Git`, open a new PowerShell window, "
+            "and run `rogertabs update`.",
         )
     src = source_dir()
     if not (src / ".git").is_dir():
         if src.exists():
             shutil.rmtree(src)
-        echo("getting the Meet code (first time only; GitHub may ask you to sign in)")
+        echo("getting the Rogertabs code (first time only; GitHub may ask you to sign in)")
         _git(git, "clone", "--quiet", "--branch", branch, repo, str(src), interactive=True)
     else:
+        if retarget_origin(git, src, repo):
+            echo(f"the update source is now {repo}")
         _git(git, "fetch", "--quiet", "origin", branch, cwd=src)
 
     latest = _git(git, "rev-parse", f"origin/{branch}", cwd=src)
     current = installed_commit()
     if current == latest and not force:
-        echo(f"Meet is up to date ({latest[:7]})")
+        echo(f"Rogertabs is up to date ({latest[:7]})")
         return 0
 
     if current:
@@ -200,22 +229,24 @@ def run(
             for line in log.splitlines():
                 echo(f"  {line[8:]}" if len(line) > 8 else f"  {line}")
     if check:
-        echo(f"an update is waiting ({(current or 'unknown')[:7]} -> {latest[:7]}); run `meet update`")
+        echo(f"an update is waiting ({(current or 'unknown')[:7]} -> {latest[:7]}); run `rogertabs update`")
         return 0
 
     # Our own clone: local edits are never expected, so match the remote exactly.
     _git(git, "reset", "--quiet", "--hard", f"origin/{branch}", cwd=src)
-    echo(f"installing Meet {latest[:7]}")
+    echo(f"installing Rogertabs {latest[:7]}")
     install(src)
     _record(latest)
     if upgrade_launcher():
-        echo("updated the `meet` launcher so it always runs the installed Meet")
+        echo("updated the `rogertabs` launcher so it always runs the installed Rogertabs")
     echo("checking the runtime (only what changed is rebuilt; models are kept)")
     return setup()
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="meet update", description="Update Meet to the latest version.")
+    parser = argparse.ArgumentParser(
+        prog="rogertabs update", description="Update Rogertabs to the latest version."
+    )
     parser.add_argument("--check", action="store_true", help="only report whether an update is waiting")
     parser.add_argument("--force", action="store_true", help="reinstall even if already up to date")
     args = parser.parse_args(argv)

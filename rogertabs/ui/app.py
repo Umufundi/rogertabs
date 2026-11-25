@@ -147,7 +147,7 @@ class QuestionPanel(Static):
         self.add_class("open")
 
 
-class MeetApp(App):
+class RogertabsApp(App):
     CSS = CSS
     BINDINGS = [
         ("ctrl+c", "wrap_up", "end meeting"),

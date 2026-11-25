@@ -2,7 +2,8 @@
 that gates learning. No torch, no microphone."""
 
 import numpy as np
-from meet_listen.audio import FRAME, SAMPLE_RATE, Endpointer, NoiseFloor
+
+from rogertabs_listen.audio import FRAME, SAMPLE_RATE, Endpointer, NoiseFloor
 
 FRAMES_PER_S = SAMPLE_RATE // FRAME  # 31
 

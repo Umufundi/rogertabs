@@ -1,7 +1,7 @@
-"""`meet setup`: build the listener runtime from the lock, fetch models, verify.
+"""`rogertabs setup`: build the listener runtime from the lock, fetch models, verify.
 
 The output is a short list of ticks, not pip's scroll. Every subprocess writes
-to a log file under ~/.meet/logs, and a failure prints the last few lines of it
+to a log file under ~/.rogertabs/logs, and a failure prints the last few lines of it
 plus the one thing to do next. A user should never have to read a Python
 traceback to find out their microphone is blocked.
 
@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import doctor, progress, runtime, sidecar
+from . import doctor, migrate, progress, runtime, sidecar
 from .memory import db
 
 TORCH_CPU_INDEX = "https://download.pytorch.org/whl/cpu"
@@ -169,13 +169,15 @@ class Setup:
             finally:
                 timer.cancel()
         if timed_out.is_set():
-            raise SetupFailed(f"{what} timed out after {timeout / 60:.0f} minutes",
-                              f"Check your internet connection and re-run `meet setup`. Log: {self.log_path}")
+            raise SetupFailed(
+                f"{what} timed out after {timeout / 60:.0f} minutes",
+                f"Check your internet connection and re-run `rogertabs setup`. Log: {self.log_path}",
+            )
         if check and proc.returncode != 0:
             tail = [line.rstrip() for line in captured if line.strip()][-6:]
             raise SetupFailed(
                 f"{what} failed\n      " + "\n      ".join(tail),
-                f"Check your internet connection and re-run `meet setup`. Full log: {self.log_path}",
+                f"Check your internet connection and re-run `rogertabs setup`. Full log: {self.log_path}",
             )
         return "".join(captured)
 
@@ -220,12 +222,14 @@ class Setup:
         from .config import meetings_dir
 
         meetings_dir()
-        self.ok(f"Meet home {runtime.home()}")
+        self.ok(f"Rogertabs home {runtime.home()}")
 
     def source(self) -> tuple[Path, str]:
         root = runtime.listener_source()
         if root is None or not (root / "requirements.lock").exists():
-            raise SetupFailed("listener source and lock not found", "Reinstall Meet from a full checkout.")
+            raise SetupFailed(
+                "listener source and lock not found", "Reinstall Rogertabs from a full checkout."
+            )
         return root, (root / "requirements.lock").read_text(encoding="utf-8")
 
     def make_venv(self) -> Path:
@@ -252,6 +256,9 @@ class Setup:
             self._pip([*pip, "--require-hashes", "--no-deps", "-r", str(req)],
                       "installing locked dependencies", len(parse_lock(hashed)))
         self.ok("locked dependencies")
+        # A runtime built before the rename holds the old `meet-listen` package.
+        self._run([str(python), "-m", "pip", "--disable-pip-version-check", "uninstall", "-y",
+                   migrate.LEGACY_DIST], "removing the pre-rename listener package", 600, check=False)
         self._run([*pip, "--no-deps", "--force-reinstall", str(root)], "installing the listener")
         self.ok("listener")
 
@@ -261,7 +268,7 @@ class Setup:
             errors = info.get("errors") or [info.get("error")]
             raise SetupFailed(
                 "the listener cannot import its stack: " + "; ".join(map(str, errors)),
-                f"Run `meet setup --force`. Full log: {self.log_path}",
+                f"Run `rogertabs setup --force`. Full log: {self.log_path}",
             )
         self.ok(f"listener imports (torch {info['packages'].get('torch')})")
         return info
@@ -293,7 +300,8 @@ class Setup:
         if not result.get("ok"):
             raise SetupFailed(
                 f"model download failed: {result.get('error')}",
-                "Check your internet connection (models come from huggingface.co) and re-run `meet setup`.",
+                "Check your internet connection (models come from huggingface.co) and re-run "
+                "`rogertabs setup`.",
             )
         self.ok(f"Whisper {self.asr_model}")
         self.ok(f"speaker model {result.get('embed_model')}")
@@ -326,7 +334,7 @@ class Setup:
     # ── orchestration ──────────────────────────────────────────────────
 
     def run(self) -> bool:
-        self.echo("MEET SETUP")
+        self.echo("ROGERTABS SETUP")
         try:
             self.check_python()
             self.make_dirs()
@@ -344,7 +352,7 @@ class Setup:
             info = self.verify()
             record = {
                 "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "meet_version": doctor.meet_version(),
+                "rogertabs_version": doctor.rogertabs_version(),
                 "python": info.get("python"),
                 "platform": info.get("platform"),
                 "listener_digest": runtime.source_digest(root),

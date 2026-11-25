@@ -1,11 +1,11 @@
-"""`meet update` against real git repositories on disk."""
+"""`rogertabs update` against real git repositories on disk."""
 
 import subprocess
 import sys
 
 import pytest
 
-from meet import update
+from rogertabs import update
 
 
 def git(*args, cwd):
@@ -87,26 +87,27 @@ def test_unreachable_repo_is_a_clear_failure(tmp_path):
 
 
 @pytest.mark.parametrize("stderr, expect", [
-    ("remote: Repository not found.\nfatal: repository 'https://github.com/Umufundi/meet.git/' not found",
+    ("remote: Repository not found.\n"
+     "fatal: repository 'https://github.com/Umufundi/rogertabs.git/' not found",
      "credential-manager github login"),
-    ("fatal: Authentication failed for 'https://github.com/Umufundi/meet.git/'", "credential-manager"),
+    ("fatal: Authentication failed for 'https://github.com/Umufundi/rogertabs.git/'", "credential-manager"),
     ("fatal: unable to access '...': Could not resolve host: github.com", "internet connection"),
-    ("fatal: something else entirely", "run `meet update` again"),
+    ("fatal: something else entirely", "run `rogertabs update` again"),
 ])
 def test_failures_say_what_to_do(stderr, expect):
-    """The first real Windows `meet update` hit "Repository not found": GitHub's
+    """The first real Windows `rogertabs update` hit "Repository not found": GitHub's
     answer to a private repo when Git sends no login (or the wrong account)."""
     assert expect.lower() in update.failure_fix(stderr).lower()
 
 
-def test_update_never_imports_the_rest_of_meet():
+def test_update_never_imports_the_rest_of_rogertabs():
     """On Windows a loaded DLL cannot be replaced; the updater must load none."""
     probe = (
         "import runpy, sys\n"
-        "sys.argv = ['meet', 'update', '--help']\n"
-        "try:\n    runpy.run_module('meet', run_name='__main__')\n"
+        "sys.argv = ['rogertabs', 'update', '--help']\n"
+        "try:\n    runpy.run_module('rogertabs', run_name='__main__')\n"
         "except SystemExit:\n    pass\n"
-        "print(sorted(m for m in ('numpy', 'meet.cli', 'textual', 'httpx') if m in sys.modules))\n"
+        "print(sorted(m for m in ('numpy', 'rogertabs.cli', 'textual', 'httpx') if m in sys.modules))\n"
     )
     out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, check=True).stdout
     assert out.strip().splitlines()[-1] == "[]"
@@ -148,13 +149,13 @@ def test_unknown_launchers_are_left_alone(tmp_path, content):
     assert (tmp_path / "meet.cmd").read_bytes() == content
 
 
-def test_dash_p_stops_a_checkout_in_the_current_folder_shadowing_meet(tmp_path):
-    """Found on a real Windows PC: `meet update` run from inside an unzipped
+def test_dash_p_stops_a_checkout_in_the_current_folder_shadowing_rogertabs(tmp_path):
+    """Found on a real Windows PC: `rogertabs update` run from inside an unzipped
     download ran that download's old code, leaving the runtime stale."""
-    (tmp_path / "meet").mkdir()
-    (tmp_path / "meet" / "__main__.py").write_text("print('SHADOW')\n")
+    (tmp_path / "rogertabs").mkdir()
+    (tmp_path / "rogertabs" / "__main__.py").write_text("print('SHADOW')\n")
     run = lambda *flags: subprocess.run(  # noqa: E731
-        [sys.executable, *flags, "-m", "meet", "--help"], cwd=tmp_path, capture_output=True, text=True
+        [sys.executable, *flags, "-m", "rogertabs", "--help"], cwd=tmp_path, capture_output=True, text=True
     ).stdout
     assert "SHADOW" in run()          # the trap, as it was
     assert "SHADOW" not in run("-P")  # what the launcher and updater now do

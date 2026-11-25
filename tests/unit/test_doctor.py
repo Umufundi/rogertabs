@@ -1,6 +1,6 @@
 import pytest
 
-from meet import doctor, runtime
+from rogertabs import doctor, runtime
 
 GOOD_PROBE = {
     "ok": True, "errors": [], "python": "3.12.7", "platform": "Windows 11",
@@ -34,9 +34,9 @@ def test_fresh_machine_is_not_ready_and_says_run_setup(monkeypatch):
     monkeypatch.setattr(runtime, "listener_python", lambda: None)
     report = doctor.run(probe_fn=lambda: {"ok": False})
     assert not report.ready
-    assert all("meet setup" in c.fix for c in report.failures)
+    assert all("rogertabs setup" in c.fix for c in report.failures)
     text = doctor.render(report)
-    assert "NOT READY" in text and "meet setup" in text
+    assert "NOT READY" in text and "rogertabs setup" in text
 
 
 def test_healthy_machine_is_ready(monkeypatch, tmp_path):
@@ -130,7 +130,7 @@ def test_offline_model_load_is_checked_on_request(monkeypatch, tmp_path):
 
 
 def test_samples_from_another_model_are_reported(monkeypatch, tmp_path, conn, voices):
-    from meet.memory import db, people
+    from rogertabs.memory import db, people
 
     install_listener(monkeypatch, tmp_path)
     primed()
@@ -142,11 +142,11 @@ def test_samples_from_another_model_are_reported(monkeypatch, tmp_path, conn, vo
     assert "samples from another speaker model" in labels(report, doctor.WARN)
 
 
-def test_database_from_a_newer_meet_is_a_failure_not_a_crash(monkeypatch, tmp_path):
+def test_database_from_a_newer_rogertabs_is_a_failure_not_a_crash(monkeypatch, tmp_path):
     import sqlite3
 
-    from meet.config import db_path
-    from meet.memory import db
+    from rogertabs.config import db_path
+    from rogertabs.memory import db
 
     db_path().parent.mkdir(parents=True, exist_ok=True)
     newer = sqlite3.connect(db_path())

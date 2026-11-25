@@ -9,9 +9,9 @@
 
 import pytest
 
-from meet.config import POLICY
-from meet.identity import jev as jev_client
-from meet.session.meeting import UNKNOWN_LABEL, Meeting
+from rogertabs.config import POLICY
+from rogertabs.identity import jev as jev_client
+from rogertabs.session.meeting import UNKNOWN_LABEL, Meeting
 from tests.conftest import MODEL
 
 
@@ -197,7 +197,7 @@ def _tie(conn, script, voices):
     """Two enrolled people whose voices the probe sits exactly between."""
     import numpy as np
 
-    from meet.memory import db, people
+    from rogertabs.memory import db, people
 
     for name, who in (("Marcus", "a"), ("Sarah", "b")):
         slug = db.upsert_person(conn, name)

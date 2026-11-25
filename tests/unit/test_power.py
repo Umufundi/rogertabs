@@ -1,6 +1,6 @@
 import sys
 
-from meet import power
+from rogertabs import power
 
 
 def test_unsupported_platform_reports_false_and_never_raises(monkeypatch):

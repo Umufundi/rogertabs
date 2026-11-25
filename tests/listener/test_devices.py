@@ -5,8 +5,8 @@ Windows laptop: the same microphones listed once per host API, and
 import sys
 import types
 
-from meet_listen import diagnose
-from meet_listen.audio import default_input
+from rogertabs_listen import diagnose
+from rogertabs_listen.audio import default_input
 
 
 def fake_sounddevice(default_index=1, broken=False):

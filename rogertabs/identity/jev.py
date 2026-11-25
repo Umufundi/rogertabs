@@ -27,7 +27,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from ..config import JEV_KEYCHAIN_SERVICE, JEV_MODEL, JEV_TIMEOUT_S, JEV_URL
+from ..config import JEV_KEYCHAIN_LEGACY_SERVICE, JEV_KEYCHAIN_SERVICE, JEV_MODEL, JEV_TIMEOUT_S, JEV_URL
 from ..memory.people import Candidate
 from . import credentials
 
@@ -95,7 +95,7 @@ def request_key() -> str | None:
 def _stored_key() -> str | None:
     # Cached: this is asked on every tie mid-meeting, and each lookup can mean
     # spawning a process. A key added mid-meeting is picked up next meeting.
-    return credentials.lookup(JEV_KEYCHAIN_SERVICE)
+    return credentials.lookup_migrating(JEV_KEYCHAIN_SERVICE, JEV_KEYCHAIN_LEGACY_SERVICE)
 
 
 def _validate(answer: dict, option_ids: set[str]) -> None:

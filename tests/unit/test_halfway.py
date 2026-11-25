@@ -7,12 +7,12 @@ question number before the name. These tests pin the fixes.
 
 import numpy as np
 
-from meet import events
-from meet.config import POLICY
-from meet.memory import people
-from meet.session.clustering import UNPLACED, OnlineClusterer
-from meet.session.meeting import UNKNOWN_LABEL, Meeting
-from meet.ui import commands
+from rogertabs import events
+from rogertabs.config import POLICY
+from rogertabs.memory import people
+from rogertabs.session.clustering import UNPLACED, OnlineClusterer
+from rogertabs.session.meeting import UNKNOWN_LABEL, Meeting
+from rogertabs.ui import commands
 from tests.conftest import MODEL
 
 SHORT = events.Quality(speech_s=0.8, snr_db=20.0, clipping=0.0, rms=0.05)
@@ -250,7 +250,7 @@ def test_undo_brings_back_a_skipped_question(conn, script):
 
 
 def test_notes_names_travel_in_a_file_not_the_command_line(tmp_path, monkeypatch):
-    from meet import notes
+    from rogertabs import notes
 
     cmd = tmp_path / "meet-notes.cmd"
     cmd.write_text("@echo off\n")
@@ -258,7 +258,7 @@ def test_notes_names_travel_in_a_file_not_the_command_line(tmp_path, monkeypatch
     folder.mkdir()
     (folder / "audio.wav").write_bytes(b"RIFF")
     calls = []
-    monkeypatch.setenv("MEET_NOTES_CMD", str(cmd))
+    monkeypatch.setenv("ROGERTABS_NOTES_CMD", str(cmd))
     monkeypatch.setattr(notes.subprocess, "Popen", lambda args, **kw: calls.append(args))
     assert notes.launch(folder, ["AT&T Smith", "Ms. 100%"]) == cmd
     assert calls == [[str(cmd), str(folder)]]
@@ -266,14 +266,14 @@ def test_notes_names_travel_in_a_file_not_the_command_line(tmp_path, monkeypatch
 
 
 def test_notes_are_optional(tmp_path, monkeypatch):
-    from meet import notes
+    from rogertabs import notes
 
-    monkeypatch.setenv("MEET_NOTES_CMD", str(tmp_path / "missing.cmd"))
+    monkeypatch.setenv("ROGERTABS_NOTES_CMD", str(tmp_path / "missing.cmd"))
     assert notes.launch(tmp_path, ["Flo"]) is None
 
 
 def test_a_local_laya_needs_no_key(monkeypatch):
-    from meet.identity import jev
+    from rogertabs.identity import jev
 
     monkeypatch.setattr(jev, "api_key", lambda: None)
     monkeypatch.setattr(jev, "JEV_URL", "http://127.0.0.1:11435/v1/systemone")
@@ -297,12 +297,12 @@ def test_undo_of_a_fold_keeps_lines_heard_after_it(conn, script):
 
 
 def test_notes_launch_failure_is_quiet(tmp_path, monkeypatch):
-    from meet import notes
+    from rogertabs import notes
 
     cmd = tmp_path / "meet-notes.cmd"
     cmd.write_text("x")
     (tmp_path / "audio.wav").write_bytes(b"RIFF")
-    monkeypatch.setenv("MEET_NOTES_CMD", str(cmd))
+    monkeypatch.setenv("ROGERTABS_NOTES_CMD", str(cmd))
 
     def boom(*a, **k):
         raise OSError("no")

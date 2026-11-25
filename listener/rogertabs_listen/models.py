@@ -25,17 +25,23 @@ EMBED_SOURCE = "speechbrain/spkrec-ecapa-voxceleb"
 EMBED_MODEL_ID = "ecapa-voxceleb@sb1"
 EMBED_DIM = 192
 
+def _env(name: str) -> str | None:
+    """ROGERTABS_<name>, then the pre-rename MEET_<name> (the core sets the new
+    one; an old shell profile may still set the old one)."""
+    return os.environ.get(f"ROGERTABS_{name}") or os.environ.get(f"MEET_{name}") or None
+
+
 # Hugging Face revisions to load. None means "whatever the hub serves", which is
-# only acceptable because `meet setup` records the snapshot it actually fetched
+# only acceptable because `rogertabs setup` records the snapshot it actually fetched
 # in the runtime manifest and every later run is offline. Set a commit hash here
 # to make a release load exactly one snapshot on every machine.
-WHISPER_REVISION: str | None = os.environ.get("MEET_WHISPER_REVISION") or None
-EMBED_REVISION: str | None = os.environ.get("MEET_EMBED_REVISION") or None
+WHISPER_REVISION: str | None = _env("WHISPER_REVISION")
+EMBED_REVISION: str | None = _env("EMBED_REVISION")
 
 
 def offline() -> bool:
-    """Models were primed by `meet setup`; never touch the network again."""
-    return os.environ.get("MEET_MODELS_OFFLINE") == "1"
+    """Models were primed by `rogertabs setup`; never touch the network again."""
+    return _env("MODELS_OFFLINE") == "1"
 
 
 def _log(message: str) -> None:
@@ -99,7 +105,7 @@ class Embedder:
         from speechbrain.inference.speaker import EncoderClassifier
 
         self.torch = torch
-        cache = os.environ.get("MEET_MODEL_CACHE") or os.path.expanduser("~/.meet/models/ecapa")
+        cache = _env("MODEL_CACHE") or os.path.expanduser("~/.rogertabs/models/ecapa")
         _log(f"loading speaker embedding: {EMBED_SOURCE}")
         # Copy rather than symlink out of the hub cache: creating symlinks on
         # Windows needs Developer Mode or admin, and fails with "a required

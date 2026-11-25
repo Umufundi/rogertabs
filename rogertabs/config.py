@@ -17,9 +17,31 @@ from pathlib import Path
 THRESHOLD_VERSION = "2026-09-23.1"
 
 
+def env(name: str, default: str | None = None) -> str | None:
+    """An environment setting by its short name: `ROGERTABS_<name>` first, then
+    the pre-rename `MEET_<name>`, so an existing shell profile, scheduled task
+    or CI job keeps working."""
+    return os.environ.get(f"ROGERTABS_{name}") or os.environ.get(f"MEET_{name}") or default
+
+
+def home_override() -> str | None:
+    """The home folder the user chose explicitly, if any (ROGERTABS_HOME, or the
+    legacy MEET_HOME). An explicit home is never migrated or moved."""
+    return env("HOME")
+
+
+def default_home() -> Path:
+    return Path.home() / ".rogertabs"
+
+
+def legacy_home() -> Path:
+    """Where Meet kept everything before the rename."""
+    return Path.home() / ".meet"
+
+
 def home() -> Path:
-    """Root for durable state. Override with MEET_HOME for a scratch profile."""
-    root = Path(os.environ.get("MEET_HOME") or (Path.home() / ".meet"))
+    """Root for durable state. Override with ROGERTABS_HOME for a scratch profile."""
+    root = Path(home_override() or default_home())
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -133,9 +155,14 @@ POLICY = Policy()
 
 # Jev. The key is read from the environment, falling back to the OS credential
 # store (Credential Manager, Keychain, Secret Service) so it never sits in a dotfile.
-# TYPESAFE_BASE_URL points Meet at any server speaking the same wire format,
+# TYPESAFE_BASE_URL points Rogertabs at any server speaking the same wire format,
 # e.g. a local Laya (ollaya serve) at http://127.0.0.1:11435.
 JEV_URL = os.environ.get("TYPESAFE_BASE_URL", "https://api.typesafe.ai").rstrip("/") + "/v1/systemone"
 JEV_MODEL = os.environ.get("TYPESAFE_MODEL", "jev-latest")
 JEV_KEYCHAIN_SERVICE = "TypeSafe API Key"
+# The key belongs to TypeSafe and keeps TypeSafe's name: no credential was ever
+# stored under a Meet-named service, so there is nothing to fall back to. If one
+# is ever introduced, set the previous name here and `lookup_migrating` reads it
+# and copies it forward on first use.
+JEV_KEYCHAIN_LEGACY_SERVICE: str | None = None
 JEV_TIMEOUT_S = 8.0
